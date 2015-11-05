@@ -4,7 +4,7 @@
  Abstract: Handles a server networking request, composed of cryptographic 
  operations, made by a connected client.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -42,7 +42,7 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
@@ -67,7 +67,7 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 					 peer:(NSString *)peerAddress 
 				 delegate:(NSObject <CryptoServerRequestDelegate, NSObject> *)anObject {
 	
-	if(self = [super init]) {
+	if (self = [super init]) {
 		self.istr = readStream;
 		self.ostr = writeStream;
 		self.peerName = peerAddress;
@@ -81,7 +81,7 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 	
 	LOGGING_FACILITY(self.istr != nil && self.ostr != nil, @"Streams not set up properly." );
 	
-	if(self.istr && self.ostr) {
+	if (self.istr && self.ostr) {
 		self.istr.delegate = self;
 		[self.istr scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 		[self.istr open];
@@ -96,8 +96,8 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 	switch(eventCode) {
 		case NSStreamEventHasSpaceAvailable:
 		{
-			if(stream == self.ostr) {
-				if([(NSOutputStream *) stream hasSpaceAvailable] && self.peerPublicKey) { 
+			if (stream == self.ostr) {
+				if ([(NSOutputStream *) stream hasSpaceAvailable] && self.peerPublicKey) { 
 					[self createBlobAndSend];
 				}
 			}
@@ -105,14 +105,14 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 		}
 		case NSStreamEventHasBytesAvailable:
 		{
-			if(stream == self.istr) {
+			if (stream == self.istr) {
 				
 				NSData * publicKey = [self receiveData];
 				[self.istr close];
 				
-				if(publicKey) {
+				if (publicKey) {
 					self.peerPublicKey = publicKey;
-					if([self.ostr hasSpaceAvailable]) {
+					if ([self.ostr hasSpaceAvailable]) {
 						[self createBlobAndSend];
 					}
 				} else {
@@ -139,7 +139,7 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 	size_t sentBytes = 0;
 	NSData * cryptoBlob = [self createBlob:self.peerName peerPublicKey:self.peerPublicKey];
 	
-	if(cryptoBlob) {
+	if (cryptoBlob) {
 		sentBytes = [self sendData:cryptoBlob];
 	} else {
 		LOGGING_FACILITY(0, @"Something wrong with the building of the crypto blob.\n");
@@ -162,14 +162,14 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 	
 	LOGGING_FACILITY1( len == sizeof(size_t), @"Read failure errno: [%d]", errno );
 	
-	if(lengthByte <= kMaxMessageLength && len == sizeof(size_t)) {
+	if (lengthByte <= kMaxMessageLength && len == sizeof(size_t)) {
 		retBlob = [NSMutableData dataWithLength:lengthByte];
 		
 		len = [self.istr read:(uint8_t *)[retBlob mutableBytes] maxLength:lengthByte];
 		
 		LOGGING_FACILITY1( len == lengthByte, @"Read failure, after buffer errno: [%d]", errno );
 		
-		if(len != lengthByte) {
+		if (len != lengthByte) {
 			retBlob = nil;
 		}
 	}
@@ -180,9 +180,9 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 - (NSUInteger)sendData:(NSData *)outData {
 	size_t len = 0;
 	
-	if(outData) {
+	if (outData) {
 		len = [outData length];
-		if(len > 0) {
+		if (len > 0) {
 			size_t longSize = sizeof(size_t);
 			
 			NSMutableData * message = [[NSMutableData alloc] initWithCapacity:(len + longSize)];
@@ -214,7 +214,7 @@ static const uint8_t kMessageBodyBytes[] = kMessageBody;
 	
 	LOGGING_FACILITY( peerPublicKeyRef, @"Could not establish client handle to public key." );
 	
-	if(peerPublicKey) {
+	if (peerPublicKey) {
 	
 		// Add the public key.
 		[messageHolder	setObject:[[SecKeyWrapper sharedWrapper] getPublicKeyBits]

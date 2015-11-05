@@ -50,12 +50,12 @@ Although this sample was designed, in theory, towards supporting a many-to-one r
 ================================================================================
 BUILD REQUIREMENTS:
 
-Mac OS X 10.5.3, Xcode 3.1, iPhone OS 2.0
+Mac OS X 10.5.6, Xcode 3.1.3, iPhone OS 3.0
 
 ================================================================================
 RUNTIME REQUIREMENTS:
 
-Mac OS X 10.5.3, iPhone OS 2.0 (Device *Only*)
+Mac OS X 10.5.6, iPhone OS 3.0 (Device *Only*)
 
 ================================================================================
 PACKAGING LIST:
@@ -90,7 +90,11 @@ Responsible for connection UI and providing an interface to executing a connect 
 ================================================================================
 CHANGES FROM PREVIOUS VERSIONS:
 
-Version 1.0
+Version 1.2
+    Adopted iPhone OS 3.0 UITableView and UITableViewCell APIs. Added check for availability of WiFi network.
+    Made minor bug fix in hash computation.
+
+Version 1.1
     N/A
 
-Copyright (c) 2008 Apple Inc. All rights reserved.
+Copyright (c) 2008-2009 Apple Inc. All rights reserved.

@@ -4,7 +4,7 @@
  Abstract: Handles all of the Bonjour initialization code and back-end to the
  UIScrollView for browsing network service instances of this sample.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -42,7 +42,7 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
@@ -130,7 +130,7 @@
 	
 #ifndef ALLOW_TO_CONNECT_TO_SELF
 	// Don't display our published record
-    if(![[cryptoServer.netService name] isEqualToString:[service name]]) {
+    if (![[cryptoServer.netService name] isEqualToString:[service name]]) {
         // If a service came online, add it to the list and update the table view if no more events are queued.
         [self.services addObject:service];
         
@@ -151,14 +151,12 @@
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = (UITableViewCell *)[tableView dequeueReusableCellWithIdentifier:@"MyCell"];
     if (cell == nil) {
-        cell = [[[UITableViewCell alloc] initWithFrame:CGRectZero reuseIdentifier:@"MyCell"] autorelease];
+        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"MyCell"] autorelease];
     }
-    cell.text = [[services objectAtIndex:indexPath.row] name];
+    cell.textLabel.text = [[services objectAtIndex:indexPath.row] name];
+	cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+	
     return cell;
-}
-
-- (UITableViewCellAccessoryType)tableView:(UITableView *)tableView accessoryTypeForRowWithIndexPath:(NSIndexPath *)indexPath {
-    return UITableViewCellAccessoryDisclosureIndicator;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

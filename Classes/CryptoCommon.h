@@ -3,7 +3,7 @@
  File: CryptoCommon.h
  Abstract: Common defines that are used between the Crypto-Client/Server.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -41,7 +41,7 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
@@ -55,13 +55,13 @@
 				NSAssert1(X, Y, Z);	
 #else
 	#define LOGGING_FACILITY(X, Y)	\
-				if(!(X)) {			\
+				if (!(X)) {			\
 					NSLog(Y);		\
 					exit(-1);		\
 				}					
 
 	#define LOGGING_FACILITY1(X, Y, Z)	\
-				if(!(X)) {				\
+				if (!(X)) {				\
 					NSLog(Y, Z);		\
 					exit(-1);			\
 				}						

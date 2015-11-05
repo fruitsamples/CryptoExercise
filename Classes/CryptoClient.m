@@ -5,7 +5,7 @@
  gets invoked by the ServiceController class when the connect button is 
  pressed.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -43,7 +43,7 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
@@ -62,7 +62,7 @@
 @synthesize service, istr, ostr, delegate, isConnected;
 
 - (id)initWithService:(NSNetService *)serviceInstance delegate:(NSObject <CryptoClientDelegate, NSObject> *)anObject {
-	if(self = [super init]) {
+	if (self = [super init]) {
 		self.service = serviceInstance;
         self.delegate = anObject;
 		self.isConnected = NO;
@@ -77,15 +77,15 @@
 	switch(eventCode) {
 		case NSStreamEventOpenCompleted:
 		{
-			if([self.ostr streamStatus] == NSStreamStatusOpen && [self.istr streamStatus] == NSStreamStatusOpen && !self.isConnected) {
+			if ([self.ostr streamStatus] == NSStreamStatusOpen && [self.istr streamStatus] == NSStreamStatusOpen && !self.isConnected) {
 				[delegate performSelectorOnMainThread:@selector(cryptoClientDidCompleteConnection:) withObject:self waitUntilDone:NO];
 				self.isConnected = YES;
 			}
 		}
 		case NSStreamEventHasSpaceAvailable:
 		{
-			if(stream == self.ostr) {
-				if([(NSOutputStream *) stream hasSpaceAvailable]) { 
+			if (stream == self.ostr) {
+				if ([(NSOutputStream *) stream hasSpaceAvailable]) { 
 					size_t retLen = 0;
 					NSData * publicKey = [[SecKeyWrapper sharedWrapper] getPublicKeyBits];
 					retLen = [self sendData:publicKey];
@@ -99,12 +99,12 @@
 		}
 		case NSStreamEventHasBytesAvailable:
 		{
-			if(stream == self.istr) {
+			if (stream == self.istr) {
 				[delegate performSelectorOnMainThread:@selector(cryptoClientWillBeginReceivingData:) withObject:self waitUntilDone:NO];
 				NSData * theBlob = [self receiveData];
 				[self.istr close];
 				[delegate performSelectorOnMainThread:@selector(cryptoClientDidFinishReceivingData:) withObject:self waitUntilDone:NO];
-				if(theBlob) {
+				if (theBlob) {
 					[delegate performSelectorOnMainThread:@selector(cryptoClientWillBeginVerifyingData:) withObject:self waitUntilDone:NO];
 					BOOL verify = [self verifyBlob:theBlob];
 					[self performSelectorOnMainThread:@selector(forwardVerificationToDelegate:) withObject:[NSNumber numberWithBool:verify] waitUntilDone:NO];
@@ -132,7 +132,7 @@
 	
 	LOGGING_FACILITY( self.istr != nil && self.ostr != nil, @"Streams not set up properly." );
 	
-	if(self.istr && self.ostr) {
+	if (self.istr && self.ostr) {
 		self.istr.delegate = self;
 		[self.istr scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 		[self.istr open];
@@ -155,14 +155,14 @@
 	
 	LOGGING_FACILITY1( len == sizeof(size_t), @"Read failure errno: [%d]", errno );
 	
-	if(lengthByte <= kMaxMessageLength && len == sizeof(size_t)) {
+	if (lengthByte <= kMaxMessageLength && len == sizeof(size_t)) {
 		retBlob = [NSMutableData dataWithLength:lengthByte];
 		
 		len = [self.istr read:(uint8_t *)[retBlob mutableBytes] maxLength:lengthByte];
 		
 		LOGGING_FACILITY1( len == lengthByte, @"Read failure, after buffer errno: [%d]", errno );
 		
-		if(len != lengthByte) {
+		if (len != lengthByte) {
 			retBlob = nil;
 		}
 	}
@@ -173,9 +173,9 @@
 - (NSUInteger)sendData:(NSData *)outData {
 	size_t len = 0;
 	
-	if(outData) {
+	if (outData) {
 		len = [outData length];
-		if(len > 0) {
+		if (len > 0) {
 			size_t longSize = sizeof(size_t);
 	
 			NSMutableData * message = [[NSMutableData alloc] initWithCapacity:(len + longSize)];
@@ -202,7 +202,7 @@
 	
 	message = [NSPropertyListSerialization propertyListFromData:blob mutabilityOption:NSPropertyListMutableContainers format:nil errorDescription:&error];
 	
-	if(!error) {
+	if (!error) {
 		
 		// Get the unwrapped symmetric key.
 		NSData * symmetricKey = [[SecKeyWrapper sharedWrapper] unwrapSymmetricKey:(NSData *)[message objectForKey:[NSString stringWithUTF8String:(const char *)kSymTag]]];

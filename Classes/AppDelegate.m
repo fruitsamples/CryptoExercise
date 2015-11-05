@@ -4,7 +4,7 @@
  Abstract: Main controller that houses the operation queue and 
  initializes the LocalBonjour Controller.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -42,23 +42,79 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
 #import "AppDelegate.h"
+#import <SystemConfiguration/SystemConfiguration.h>
+#import <netinet/in.h>
 
 @implementation AppDelegate
 
 @synthesize window, navController, cryptoQueue;
 
-- (void)applicationDidFinishLaunching:(UIApplication *)application {	
-	// Add the controller's view as a subview of the window
-	[self.window addSubview:navController.view]; 
+- (BOOL)isNetworkAvailableFlags:(SCNetworkReachabilityFlags *)outFlags {
+	SCNetworkReachabilityRef	defaultRouteReachability;
+	struct sockaddr_in			zeroAddress;
 	
-	NSOperationQueue * theQueue = [[NSOperationQueue alloc] init];
-	self.cryptoQueue = theQueue;
-	[theQueue release];
+	bzero(&zeroAddress, sizeof(zeroAddress));
+	zeroAddress.sin_len = sizeof(zeroAddress);
+	zeroAddress.sin_family = AF_INET;
+	
+	defaultRouteReachability = SCNetworkReachabilityCreateWithAddress(NULL, (struct sockaddr *)&zeroAddress);
+	
+	SCNetworkReachabilityFlags flags;
+	BOOL gotFlags = SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags);
+	if (!gotFlags) {
+        return NO;
+    }
+    
+    // kSCNetworkReachabilityFlagsReachable indicates that the specified nodename or address can
+	// be reached using the current network configuration.
+	BOOL isReachable = flags & kSCNetworkReachabilityFlagsReachable;
+	
+	// This flag indicates that the specified nodename or address can
+	// be reached using the current network configuration, but a
+	// connection must first be established.
+	//
+	// If the flag is false, we don't have a connection. But because CFNetwork
+    // automatically attempts to bring up a WWAN connection, if the WWAN reachability
+    // flag is present, a connection is not required.
+	BOOL noConnectionRequired = !(flags & kSCNetworkReachabilityFlagsConnectionRequired);
+	if ((flags & kSCNetworkReachabilityFlagsIsWWAN)) {
+		noConnectionRequired = YES;
+	}
+	
+	// Callers of this method might want to use the reachability flags, so if an 'out' parameter
+	// was passed in, assign the reachability flags to it.
+	if (outFlags) {
+		*outFlags = flags;
+	}
+	
+	return isReachable && noConnectionRequired;
+}
+
+- (void)applicationDidFinishLaunching:(UIApplication *)application {	
+	// Is WiFi network available? That's necessary to use Bonjour.
+	if ([self isNetworkAvailableFlags:NULL] == NO) {
+		// open an alert with just an OK button
+		UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"No WiFi network available." 
+														message:@"Exit this app and enable WiFi using the Settings application."
+													   delegate:self 
+											  cancelButtonTitle:@"OK" 
+											  otherButtonTitles: nil];
+		[alert show];	
+		[alert release];
+	}
+	else {	
+		// Add the controller's view as a subview of the window
+		[self.window addSubview:navController.view]; 
+		
+		NSOperationQueue * theQueue = [[NSOperationQueue alloc] init];
+		self.cryptoQueue = theQueue;
+		[theQueue release];
+	}
 }
 
 - (void)dealloc {

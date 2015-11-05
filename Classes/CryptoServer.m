@@ -4,7 +4,7 @@
  Abstract: Contains the bootstrapping server networking operations. It gets 
  invoked by the LocalBonjourController class during startup.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -42,7 +42,7 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
@@ -63,7 +63,7 @@ NSString * const CryptoServerErrorDomain = @"CryptoServerErrorDomain";
 @synthesize netService, connectionBag, ipv4socket;
 
 - (id)init {
-	if(self = [super init]) {
+	if (self = [super init]) {
 		self.connectionBag = [[NSMutableSet alloc] init];
 		NSError * thisError = nil;
 		[self setupServer:&thisError];
@@ -92,7 +92,7 @@ static void CryptoServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType 
         socklen_t peerLen = sizeof(peerAddress);
         NSString * peer = nil;
 		
-        if(getpeername(nativeSocketHandle, (struct sockaddr *)&peerAddress, (socklen_t *)&peerLen) == 0) {
+        if (getpeername(nativeSocketHandle, (struct sockaddr *)&peerAddress, (socklen_t *)&peerLen) == 0) {
             peer = [NSString stringWithUTF8String:inet_ntoa(peerAddress.sin_addr)];
 		} else {
 			peer = @"Generic Peer";
@@ -122,12 +122,12 @@ static void CryptoServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType 
 	socklen_t nameLen = 0;
 	nameLen = sizeof(serverAddress);
 	
-	if(self.netService && ipv4socket) {
+	if (self.netService && ipv4socket) {
 		// Calling [self run] more than once should be a NOP.
 		return;
 	} else {
 	
-		if(!ipv4socket) {
+		if (!ipv4socket) {
 			CFSocketContext socketCtxt = {0, self, NULL, NULL, NULL};
 			self.ipv4socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, (CFSocketCallBack)&CryptoServerAcceptCallBack, &socketCtxt);
 	
@@ -149,8 +149,8 @@ static void CryptoServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType 
 			NSData * address4 = [NSData dataWithBytes:&serverAddress length:nameLen];
 			
 			if (kCFSocketSuccess != CFSocketSetAddress(ipv4socket, (CFDataRef)address4)) {
-				if(error) *error = [[NSError alloc] initWithDomain:CryptoServerErrorDomain code:kCryptoServerCouldNotBindToIPv4Address userInfo:nil];
-				if(ipv4socket) CFRelease(ipv4socket);
+				if (error) *error = [[NSError alloc] initWithDomain:CryptoServerErrorDomain code:kCryptoServerCouldNotBindToIPv4Address userInfo:nil];
+				if (ipv4socket) CFRelease(ipv4socket);
 				ipv4socket = NULL;
 				return;
 			}
@@ -168,13 +168,13 @@ static void CryptoServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType 
 			CFRelease(source);
 		}
 	
-		if(!self.netService && ipv4socket) {
+		if (!self.netService && ipv4socket) {
 			self.netService = [[NSNetService alloc] initWithDomain:@"local" type:kBonjourServiceType name:[[UIDevice currentDevice] name] port:chosenPort];
 			[self.netService setDelegate:self];
 		}
 	
-		if(!self.netService && !ipv4socket) {
-			if(error) *error = [[NSError alloc] initWithDomain:CryptoServerErrorDomain code:kCryptoServerCouldNotBindOrEstablishNetService userInfo:nil];
+		if (!self.netService && !ipv4socket) {
+			if (error) *error = [[NSError alloc] initWithDomain:CryptoServerErrorDomain code:kCryptoServerCouldNotBindOrEstablishNetService userInfo:nil];
 			[self teardown];
 			return;
 		}
@@ -197,13 +197,13 @@ static void CryptoServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType 
 	LOGGING_FACILITY( peerName != nil, @"No peer name given for client." );
 	LOGGING_FACILITY( readStream != nil && writeStream != nil, @"One or both streams are invalid." );
 	
-	if(peerName != nil && readStream != nil && writeStream != nil) {
+	if (peerName != nil && readStream != nil && writeStream != nil) {
 		CryptoServerRequest * newPeer = [[CryptoServerRequest alloc] initWithInputStream:readStream 
 																			outputStream:writeStream 
 																					peer:peerName 
 																				delegate:self];
 		
-		if(newPeer) {
+		if (newPeer) {
 			[newPeer runProtocol];
 			[self.connectionBag addObject:newPeer];
 		}
@@ -213,24 +213,24 @@ static void CryptoServerAcceptCallBack(CFSocketRef socket, CFSocketCallBackType 
 }
 
 - (void)cryptoServerRequestDidFinish:(CryptoServerRequest *)request {
-	if(request) {
+	if (request) {
 		[self.connectionBag removeObject:request];
 	}
 }
 
 - (void)cryptoServerRequestDidReceiveError:(CryptoServerRequest *)request {
-	if(request) {
+	if (request) {
 		[self.connectionBag removeObject:request];
 	}
 }
 
 - (void)teardown {
-	if(self.netService) {
+	if (self.netService) {
 		[self.netService stop];
 		[self.netService removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 		self.netService = nil;
 	}
-	if(self.ipv4socket) {
+	if (self.ipv4socket) {
 		CFSocketInvalidate(self.ipv4socket);
 		CFRelease(self.ipv4socket);
 		self.ipv4socket = NULL;

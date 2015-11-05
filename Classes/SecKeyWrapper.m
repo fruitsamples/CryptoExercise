@@ -5,7 +5,7 @@
  APIs on the iPhone OS. Start here if all you are interested in are the 
  cryptographic APIs on the iPhone OS.
  
- Version: 1.0
+ Version: 1.2
  
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple Inc.
  ("Apple") in consideration of your agreement to the following terms, and your
@@ -43,7 +43,7 @@
  CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
  APPLE HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
- Copyright (C) 2008 Apple Inc. All Rights Reserved.
+ Copyright (C) 2008-2009 Apple Inc. All Rights Reserved.
  
  */
 
@@ -62,12 +62,12 @@
 					NSAssert1(X, Y, Z);	
 #else
 	#define LOGGING_FACILITY(X, Y)	\
-				if(!(X)) {			\
+				if (!(X)) {			\
 					NSLog(Y);		\
 				}					
 
 	#define LOGGING_FACILITY1(X, Y, Z)	\
-				if(!(X)) {				\
+				if (!(X)) {				\
 					NSLog(Y, Z);		\
 				}						
 #endif
@@ -81,7 +81,7 @@ choose Project > Set Active SDK > Device and connect a device. Then click Build 
 - (id)objectForKey:(id)key { return nil; }
 // Dummy implementations for my SecKeyWrapper class.
 - (void)generateKeyPair:(NSUInteger)keySize {}
-- (void)deleteAysmmetricKeys {}
+- (void)deleteAsymmetricKeys {}
 - (void)deleteSymmetricKey {}
 - (void)generateSymmetricKey {}
 - (NSData *)getSymmetricKeyBytes { return NULL; }
@@ -111,7 +111,7 @@ enum {
 // identifiers used to find public, private, and symmetric key.
 static const uint8_t publicKeyIdentifier[]		= kPublicKeyTag;
 static const uint8_t privateKeyIdentifier[]		= kPrivateKeyTag;
-static const uint8_t symmetricKeyIndentifier[]	= kSymmetricKeyTag;
+static const uint8_t symmetricKeyIdentifier[]	= kSymmetricKeyTag;
 
 static SecKeyWrapper * __sharedKeyWrapper = nil;
 
@@ -151,7 +151,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
     return self;
 }
 
-- (NSInteger)retainCount {
+- (NSUInteger)retainCount {
     return UINT_MAX;
 }
 
@@ -161,13 +161,13 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 		 // Tag data to search for keys.
 		 privateTag = [[NSData alloc] initWithBytes:privateKeyIdentifier length:sizeof(privateKeyIdentifier)];
 		 publicTag = [[NSData alloc] initWithBytes:publicKeyIdentifier length:sizeof(publicKeyIdentifier)];
-		 symmetricTag = [[NSData alloc] initWithBytes:publicKeyIdentifier length:sizeof(symmetricKeyIndentifier)];
+		 symmetricTag = [[NSData alloc] initWithBytes:symmetricKeyIdentifier length:sizeof(symmetricKeyIdentifier)];
 	 }
 	
 	return self;
 }
 
-- (void)deleteAysmmetricKeys {
+- (void)deleteAsymmetricKeys {
 	OSStatus sanityCheck = noErr;
 	NSMutableDictionary * queryPublicKey = [[NSMutableDictionary alloc] init];
 	NSMutableDictionary * queryPrivateKey = [[NSMutableDictionary alloc] init];
@@ -192,8 +192,8 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	[queryPrivateKey release];
 	[queryPublicKey release];
-	if(publicKeyRef) CFRelease(publicKeyRef);
-	if(privateKeyRef) CFRelease(privateKeyRef);
+	if (publicKeyRef) CFRelease(publicKeyRef);
+	if (privateKeyRef) CFRelease(privateKeyRef);
 }
 
 - (void)deleteSymmetricKey {
@@ -222,7 +222,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	LOGGING_FACILITY1( keySize == 512 || keySize == 1024 || keySize == 2048, @"%d is an invalid and unsupported key size.", keySize );
 	
 	// First delete current keys.
-	[self deleteAysmmetricKeys];
+	[self deleteAsymmetricKeys];
 	
 	// Container dictionaries.
 	NSMutableDictionary * privateKeyAttr = [[NSMutableDictionary alloc] init];
@@ -298,7 +298,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	sanityCheck = SecItemAdd((CFDictionaryRef) symmetricKeyAttr, NULL);
 	LOGGING_FACILITY1( sanityCheck == noErr || sanityCheck == errSecDuplicateItem, @"Problem storing the symmetric key in the keychain, OSStatus == %d.", sanityCheck );
 	
-	if(symmetricKey) free(symmetricKey);
+	if (symmetricKey) free(symmetricKey);
 	[symmetricKeyAttr release];
 }
 
@@ -330,7 +330,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	LOGGING_FACILITY1( sanityCheck == noErr || sanityCheck == errSecDuplicateItem, @"Problem adding the peer public key to the keychain, OSStatus == %d.", sanityCheck );
 	
-	if(persistPeer) {
+	if (persistPeer) {
 		peerKeyRef = [self getKeyRefWithPersistentKeyRef:persistPeer];
 	} else {
 		[peerPublicKeyAttr removeObjectForKey:(id)kSecValueData];
@@ -343,7 +343,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	[peerTag release];
 	[peerPublicKeyAttr release];
-	if(persistPeer) CFRelease(persistPeer);
+	if (persistPeer) CFRelease(persistPeer);
 	return peerKeyRef;
 }
 
@@ -382,7 +382,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	cipherBufferSize = SecKeyGetBlockSize(publicKey);
 	keyBufferSize = [symmetricKey length];
 	
-	if(kTypeOfWrapPadding == kSecPaddingNone) {
+	if (kTypeOfWrapPadding == kSecPaddingNone) {
 		LOGGING_FACILITY( keyBufferSize <= cipherBufferSize, @"Nonce integer is too large and falls outside multiplicative group." );
 	} else {
 		LOGGING_FACILITY( keyBufferSize <= (cipherBufferSize - 11), @"Nonce integer is too large and falls outside multiplicative group." );
@@ -406,7 +406,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	// Build up cipher text blob.
 	cipher = [NSData dataWithBytes:(const void *)cipherBuffer length:(NSUInteger)cipherBufferSize];
 	
-	if(cipherBuffer) free(cipherBuffer);
+	if (cipherBuffer) free(cipherBuffer);
 	
 	return cipher;
 }
@@ -448,7 +448,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	// Build up plain text blob.
 	key = [NSData dataWithBytes:(const void *)keyBuffer length:(NSUInteger)keyBufferSize];
 	
-	if(keyBuffer) free(keyBuffer);
+	if (keyBuffer) free(keyBuffer);
 	
 	return key;
 }
@@ -465,14 +465,14 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	// Initialize the context.
 	CC_SHA1_Init(&ctx);
 	// Perform the hash.
-	CC_SHA1_Update(&ctx, (void *)[plainText bytes], kChosenDigestLength);
+	CC_SHA1_Update(&ctx, (void *)[plainText bytes], [plainText length]);
 	// Finalize the output.
 	CC_SHA1_Final(hashBytes, &ctx);
 	
 	// Build up the SHA1 blob.
 	hash = [NSData dataWithBytes:(const void *)hashBytes length:(NSUInteger)kChosenDigestLength];
 	
-	if(hashBytes) free(hashBytes);
+	if (hashBytes) free(hashBytes);
 	
 	return hash;
 }
@@ -507,7 +507,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	// Build up signed SHA1 blob.
 	signedHash = [NSData dataWithBytes:(const void *)signedHashBytes length:(NSUInteger)signedHashBytesSize];
 	
-	if(signedHashBytes) free(signedHashBytes);
+	if (signedHashBytes) free(signedHashBytes);
 	
 	return signedHash;
 }
@@ -565,15 +565,15 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	LOGGING_FACILITY(plainTextBufferSize > 0, @"Empty plaintext passed in." );
 	
 	// We don't want to toss padding on if we don't need to
-	if(encryptOrDecrypt == kCCEncrypt) {
-		if(*pkcs7 != kCCOptionECBMode) {
-			if((plainTextBufferSize % kChosenCipherBlockSize) == 0) {
+	if (encryptOrDecrypt == kCCEncrypt) {
+		if (*pkcs7 != kCCOptionECBMode) {
+			if ((plainTextBufferSize % kChosenCipherBlockSize) == 0) {
 				*pkcs7 = 0x0000;
 			} else {
 				*pkcs7 = kCCOptionPKCS7Padding;
 			}
 		}
-	} else if(encryptOrDecrypt != kCCDecrypt) {
+	} else if (encryptOrDecrypt != kCCDecrypt) {
 		LOGGING_FACILITY1( 0, @"Invalid CCOperation parameter [%d] for cipher context.", *pkcs7 );
 	} 
 	
@@ -630,7 +630,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	totalBytesWritten += movedBytes;
 	
-	if(thisEncipher) {
+	if (thisEncipher) {
 		(void) CCCryptorRelease(thisEncipher);
 		thisEncipher = NULL;
 	}
@@ -639,7 +639,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	cipherOrPlainText = [NSData dataWithBytes:(const void *)bufferPtr length:(NSUInteger)totalBytesWritten];
 
-	if(bufferPtr) free(bufferPtr);
+	if (bufferPtr) free(bufferPtr);
 	
 	return cipherOrPlainText;
 	
@@ -665,7 +665,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	OSStatus sanityCheck = noErr;
 	SecKeyRef publicKeyReference = NULL;
 	
-	if(publicKeyRef == NULL) {
+	if (publicKeyRef == NULL) {
 		NSMutableDictionary * queryPublicKey = [[NSMutableDictionary alloc] init];
 		
 		// Set the public key query dictionary.
@@ -677,7 +677,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 		// Get the key.
 		sanityCheck = SecItemCopyMatching((CFDictionaryRef)queryPublicKey, (CFTypeRef *)&publicKeyReference);
 		
-		if(sanityCheck != noErr)
+		if (sanityCheck != noErr)
 		{
 			publicKeyReference = NULL;
 		}
@@ -705,7 +705,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	// Get the key bits.
 	sanityCheck = SecItemCopyMatching((CFDictionaryRef)queryPublicKey, (CFTypeRef *)&publicKeyBits);
 		
-	if(sanityCheck != noErr)
+	if (sanityCheck != noErr)
 	{
 		publicKeyBits = nil;
 	}
@@ -719,7 +719,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	OSStatus sanityCheck = noErr;
 	SecKeyRef privateKeyReference = NULL;
 	
-	if(privateKeyRef == NULL) {
+	if (privateKeyRef == NULL) {
 		NSMutableDictionary * queryPrivateKey = [[NSMutableDictionary alloc] init];
 		
 		// Set the private key query dictionary.
@@ -731,7 +731,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 		// Get the key.
 		sanityCheck = SecItemCopyMatching((CFDictionaryRef)queryPrivateKey, (CFTypeRef *)&privateKeyReference);
 		
-		if(sanityCheck != noErr)
+		if (sanityCheck != noErr)
 		{
 			privateKeyReference = NULL;
 		}
@@ -748,7 +748,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	OSStatus sanityCheck = noErr;
 	NSData * symmetricKeyReturn = nil;
 	
-	if(self.symmetricKeyRef == nil) {
+	if (self.symmetricKeyRef == nil) {
 		NSMutableDictionary * querySymmetricKey = [[NSMutableDictionary alloc] init];
 		
 		// Set the private key query dictionary.
@@ -760,7 +760,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 		// Get the key bits.
 		sanityCheck = SecItemCopyMatching((CFDictionaryRef)querySymmetricKey, (CFTypeRef *)&symmetricKeyReturn);
 		
-		if(sanityCheck == noErr && symmetricKeyReturn != nil) {
+		if (sanityCheck == noErr && symmetricKeyReturn != nil) {
 			self.symmetricKeyRef = symmetricKeyReturn;
 		} else {
 			self.symmetricKeyRef = nil;
@@ -788,6 +788,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	// Get the persistent key reference.
 	sanityCheck = SecItemCopyMatching((CFDictionaryRef)queryKey, (CFTypeRef *)&persistentRef);
+	[queryKey release];
 	
 	return persistentRef;
 }
@@ -806,6 +807,7 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
 	
 	// Get the persistent key reference.
 	sanityCheck = SecItemCopyMatching((CFDictionaryRef)queryKey, (CFTypeRef *)&keyRef);
+	[queryKey release];
 	
 	return keyRef;
 }
@@ -815,8 +817,8 @@ static SecKeyWrapper * __sharedKeyWrapper = nil;
     [publicTag release];
 	[symmetricTag release];
 	[symmetricKeyRef release];
-	if(publicKeyRef) CFRelease(publicKeyRef);
-	if(privateKeyRef) CFRelease(privateKeyRef);
+	if (publicKeyRef) CFRelease(publicKeyRef);
+	if (privateKeyRef) CFRelease(privateKeyRef);
     [super dealloc];
 }
 
